@@ -7,6 +7,8 @@
  - [ ] papertrail
  - [ ] check for short hostnames
  - [ ] log complete source url
+ - [ ] recursive lookup
+ - [ ] auto action that does lookup, then add/remove
 
 ```bash
 ./r2server --hostname=addwww.redirect2.me --port=80 --debug --verbose --action=addwww
