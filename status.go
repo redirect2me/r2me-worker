@@ -12,29 +12,27 @@ import (
 type Status struct {
 	Success  bool		`json:"success"`
 	Version  string		`json:"version"`
-	//Environ  []string
-	Getwd    string
-	Hostname string
-	Seconds  int64
-	TempDir  string
+	Getwd    string     `json:"os.Getwd"`
+    Hostname string     `json:"os.Hostname"`
+    Seconds  int64      `json:"time.Now"`
+    TempDir  string     `json:"os.TempDir"`
 }
 
-func Status_handler(w http.ResponseWriter, r *http.Request) {
+func statusHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	status := Status{}
 
 	status.Getwd, err = os.Getwd()
 	if err != nil {
-		status.Getwd = "ERROR!"
+		status.Getwd = "ERROR: " + err.Error()
 	}
 
 	status.Hostname, err = os.Hostname()
 	if err != nil {
-		status.Hostname = "ERROR"
+		status.Hostname = "ERROR: " + err.Error()
 	}
 
 	status.TempDir = os.TempDir()
-	//status.Environ = os.Environ()
 	status.Version = runtime.Version()
 	status.Seconds = time.Now().Unix()
 	status.Success = true

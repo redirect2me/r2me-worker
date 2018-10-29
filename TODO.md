@@ -1,14 +1,35 @@
+# To do
 
-
+ - [ ] check to name is IP address (net.ParseIP)
+ - [ ] getUrl(r)
+ - [ ] getHost(r)
+ - [ ] getClientIP (CF-Connecting-IP, X-Forwarded-For)
+ - [ ] json logging
  - [ ] install.sh: adduser is prompting
  - [ ] actually use the r2me user
+ - [ ] lookup caching
  - [ ] init script
  - [ ] lookup: parse TXT value and use http/s and/or path/querystring
+ - [ ] different http status codes: 301, 302, 307...
  - [ ] papertrail
- - [ ] check for short hostnames
+ - [ ] check for short hostnames (less than len(www))
  - [ ] log complete source url
  - [ ] recursive lookup
+ - [ ] interstitial redirect pages
+ 
+## https support
+ - [ ] keypair table
+ - [ ] generate csr & store
+ - [ ] generate private key & store
+ - [ ] save nonce from LetsEncrypt
+ - [ ] handler for .well-known
+ - [ ] shoelace.css for error page
+ - [ ] handle https
+
+## Maybe, maybe not
  - [ ] auto action that does lookup, then add/remove
+ - [ ] server-side google analytics (https://developers.google.com/analytics/devguides/collection/protocol/v1/)
+
 
 ```bash
 ./r2server --hostname=addwww.redirect2.me --port=80 --debug --verbose --action=addwww

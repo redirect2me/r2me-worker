@@ -1,38 +1,16 @@
-Redirect2www
-============
+# redirect2me server [<img alt="redirect2me Logo" src="https://www.redirect2.me/favicon.svg" height="90" align="right" />](https://www.redirect2.me/)
 
-Server to redirect all requests from a naked domain to the `www.` version.
+Server that actually handle redirects.
+
+## License
+
+Copyright (c) 2018 by Andrew Marcuse.  All Rights Reserved.
 
 To Do
 -----
- - [x] go web server
- - [x] test redirects
- - [x] command line flags
- - [ ] handle IP address hostnames
- - [x] stdout logging
- - [ ] error page (on www)
- - [x] use port from args/env
- - [x] log referrer
- - [ ] getHost
- - [ ] getClientIP (CF-Connecting-IP, X-Forwarded-For)
- - [ ] keypair table
- - [ ] generate csr & store
- - [ ] generate private key & store
- - [ ] save nonce from LetsEncrypt
- - [ ] handler for .well-known
- - [ ] shoelace.css for error page
- - [ ] handle https
- - [ ] errors should have link to FAQ page on main website
- - [ ] flag for testing db on startup
- - [ ] arg for db connection string
- - [ ] server-side google analytics (https://developers.google.com/analytics/devguides/collection/protocol/v1/)
 
 Later
 -----
- - [ ] more data in dblog detail: schema, querystring
- - [ ] check for oversize field lengths in dblog
- - [ ] update hostlog (in trigger, maybe after PGSQL 9.6 upgrade)
- - [ ] CORS headers (why is this any use?)
 
 DNS library: https://github.com/miekg/dns https://miek.nl/2014/august/16/go-dns-package/
 

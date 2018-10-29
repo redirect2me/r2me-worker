@@ -21,9 +21,9 @@ var (
     hostname = flag.String("hostname", "localhost", "hostname of this server");
     action = flag.String("action", "lookup", "action [lookup|addwww|removewww]");
 
-    supportUrl = "https://www.redirect2.me/support/faq.html?page=";
+    supportUrl = "https://www.redirect2.me/support/";
 
-    logger = log.New(os.Stdout, "R2W: ", log.Ldate | log.Ltime | log.Lmicroseconds | log.LUTC);
+    logger = log.New(os.Stdout, "R2ME: ", log.Ldate | log.Ltime | log.Lmicroseconds | log.LUTC);
     mapFunc func(*http.Request) string;
 )
 
@@ -178,7 +178,7 @@ func main() {
     }
 
     http.HandleFunc("/", redirect_handler);
-	http.HandleFunc(*hostname + "/status.json", Status_handler);
+	http.HandleFunc(*hostname + "/status.json", statusHandler);
 	http.HandleFunc(*hostname + "/", www_handler);
 
     if (*verbose) {
