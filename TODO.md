@@ -1,5 +1,7 @@
 # To do
 
+ - [ ] run.sh to reload on changes
+ - [ ] merge status.go changes
  - [ ] check to name is IP address (net.ParseIP)
  - [ ] getUrl(r)
  - [ ] getHost(r)
