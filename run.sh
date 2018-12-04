@@ -1,4 +1,4 @@
 #!/bin/bash
 
 
-go run r2server.go status.go --port=4000
+go run r2server.go status.go --port=4000 --verbose --debug

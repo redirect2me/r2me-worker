@@ -21,7 +21,7 @@ var (
     hostname = flag.String("hostname", "localhost", "hostname of this server");
     action = flag.String("action", "lookup", "action [lookup|addwww|removewww]");
 
-    supportUrl = "https://www.redirect2.me/support/";
+    supportUrl = "https://www.redirect2.me/support/${error}.html";
 
     logger = log.New(os.Stdout, "R2ME: ", log.Ldate | log.Ltime | log.Lmicroseconds | log.LUTC);
     mapFunc func(*http.Request) string;
@@ -30,6 +30,10 @@ var (
 func customDNSDialer(ctx context.Context, network, address string) (net.Conn, error) {
     d := net.Dialer{}
     return d.DialContext(ctx, "udp", "1.1.1.1:53")
+}
+
+func makeError(errcode string) (string) {
+    return strings.Replace(supportUrl, "${error}", errcode, -1);
 }
 
 func getScheme(r *http.Request) (string) {
@@ -77,7 +81,7 @@ func mapAddWww(r *http.Request) (string) {
     host := r.Host;
 
     if (strings.HasPrefix(host, "www.")) {
-        return supportUrl + "error-already-has-www.html";
+        return makeError("error-already-has-www");
     }
 
     loc := url.URL(*r.URL);
@@ -91,7 +95,7 @@ func mapRemoveWww(r *http.Request) (string) {
     host := r.Host;
 
     if (!strings.HasPrefix(host, "www.")) {
-        return supportUrl + "error-does-not-have-www.html";
+        return makeError("error-does-not-have-www");
     }
 
     loc := url.URL(*r.URL);
@@ -104,23 +108,38 @@ func mapLookup(r *http.Request) (string) {
 
     host := r.Host;
 
-    newHost := lookupLow(host);
+    lookup := lookupLow(host);
 
-    if (newHost == "") {
-        return supportUrl + "error-lookup-not-found.html";
+    if (lookup == "") {
+        return makeError("error-lookup-not-found");
     }
 
-    loc := url.URL(*r.URL);
-    loc.Scheme = getScheme(r);
-    loc.Host = newHost;
-    return loc.String();
+    u, err := url.Parse(lookup)
+    if (err != nil) {
+        return makeError("lookup-parse-error");
+    }
+
+    result := url.URL(*r.URL);
+    if (u.Scheme == "") {
+        result.Scheme = getScheme(r)
+    } else {
+        result.Scheme = u.Scheme
+    }
+    result.Host = u.Host
+    if (u.Path != "") {
+        result.Path = u.Path;
+    }
+    if (u.RawQuery != "") {
+        result.RawQuery = u.RawQuery
+    }
+    return result.String();
 }
 
 func redirect_handler(w http.ResponseWriter, r *http.Request) {
 
     /* LATER:
     if (isAddress(r)) {
-        return supportUrl + "error-host-is-ip-address.html";
+        return makeError("error-host-is-ip-address");
     }
     */
 
