@@ -8,19 +8,33 @@ import (
 	"time"
 )
 
+var COMMIT string;
+var LASTMOD string;
 
 type Status struct {
 	Success  bool		`json:"success"`
+	Message  string		`json:"message"`
+	Commit   string     `json:"commit"`
+	LastMod  string     `json:"lastmod"`
+	Timestamp  string   `json:"timestamp"`
+	Tech     string     `json:"tech"`
 	Version  string		`json:"version"`
 	Getwd    string     `json:"os.Getwd"`
     Hostname string     `json:"os.Hostname"`
-    Seconds  int64      `json:"time.Now"`
+    Seconds  int64      `json:"os.Time.Now().Unix()"`
     TempDir  string     `json:"os.TempDir"`
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	status := Status{}
+
+	status.Success = true
+    status.Message = "OK"
+    status.Timestamp = time.Now().UTC().Format(time.RFC3339)
+    status.Commit = COMMIT;
+    status.LastMod = LASTMOD;
+	status.Tech = runtime.Version()
 
 	status.Getwd, err = os.Getwd()
 	if err != nil {
@@ -35,7 +49,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	status.TempDir = os.TempDir()
 	status.Version = runtime.Version()
 	status.Seconds = time.Now().Unix()
-	status.Success = true
+
 	callback := r.FormValue("callback");
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf8")
