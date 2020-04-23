@@ -1,185 +1,240 @@
 package main
 
 import (
-    "context"
-    "fmt"
-    "encoding/json"
-    "log"
-    "flag"
-    "net"
-    "net/http"
-    "net/url"
-    "os"
-    "strconv"
-    "strings"
+	"bytes"
+	"context"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"strconv"
+	"strings"
 )
 
 var (
-    verbose = flag.Bool("verbose", true, "verbose logging");
-    debug = flag.Bool("debug", false, "print instead of redirect");
-    port = flag.Int("port", 80, "port to listen on");
-    hostname = flag.String("hostname", "localhost", "hostname of this server");
-    action = flag.String("action", "lookup", "action [lookup|addwww|removewww]");
+	verbose  = flag.Bool("verbose", true, "verbose logging")
+	debug    = flag.Bool("debug", false, "print instead of redirect")
+	port     = flag.Int("port", 80, "port to listen on")
+	hostname = flag.String("hostname", "localhost", "hostname of this server")
+	action   = flag.String("action", "lookup", "action [lookup|addwww|removewww|api]")
+	endpoint = flag.String("endpoint", "https://admin.redirect2.me/api/lookup.json", "endpoint https://www.example.com/api/lookup.json")
 
-    supportUrl = "https://www.redirect2.me/support/${error}.html";
+	supportUrl = "https://www.redirect2.me/support/${error}.html"
 
-    logger = log.New(os.Stdout, "R2ME: ", log.Ldate | log.Ltime | log.Lmicroseconds | log.LUTC);
-    mapFunc func(*http.Request) string;
+	logger  = log.New(os.Stdout, "R2ME: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC)
+	mapFunc func(*http.Request) string
 )
 
 func customDNSDialer(ctx context.Context, network, address string) (net.Conn, error) {
-    d := net.Dialer{}
-    return d.DialContext(ctx, "udp", "1.1.1.1:53")
+	d := net.Dialer{}
+	return d.DialContext(ctx, "udp", "1.1.1.1:53")
 }
 
-func makeError(errcode string) (string) {
-    return strings.Replace(supportUrl, "${error}", errcode, -1);
+func makeError(errcode string) string {
+	return strings.Replace(supportUrl, "${error}", errcode, -1)
 }
 
-func getScheme(r *http.Request) (string) {
+func getScheme(r *http.Request) string {
 
-    proxyValue := r.Header.Get("X-Forwarded-Proto")
-    if (proxyValue != "") {
-        return proxyValue;
-    }
+	proxyValue := r.Header.Get("X-Forwarded-Proto")
+	if proxyValue != "" {
+		return proxyValue
+	}
 
-    urlValue := r.URL.Scheme;
-    if (urlValue != "") {
-        return urlValue;
-    }
+	urlValue := r.URL.Scheme
+	if urlValue != "" {
+		return urlValue
+	}
 
-    return "http";
+	return "http"
 }
 
-func lookupLow(domain string) (string) {
-    prefix := "redirect2me=";
+func lookupLow(domain string) string {
+	prefix := "redirect2me="
 
-    r := net.Resolver{
-        PreferGo: true,
-        Dial: customDNSDialer,
-    }
+	r := net.Resolver{
+		PreferGo: true,
+		Dial:     customDNSDialer,
+	}
 
-    results, err := r.LookupTXT(context.Background(), domain);
+	results, err := r.LookupTXT(context.Background(), domain)
 
-    if (err != nil || len(results) == 0) {
-        return "";
-    }
+	if err != nil || len(results) == 0 {
+		return ""
+	}
 
-    for rIndex := 0; rIndex < len(results); rIndex++ {
-        result := results[rIndex];
-        logger.Printf("INFO: %s(%d): %s\n", domain, rIndex, result);
-        if (len(result) > len(prefix) + 1 && result[0:len(prefix)] == prefix) {
-            return results[rIndex][len(prefix):]
-        }
-    }
+	for rIndex := 0; rIndex < len(results); rIndex++ {
+		result := results[rIndex]
+		logger.Printf("INFO: %s(%d): %s\n", domain, rIndex, result)
+		if len(result) > len(prefix)+1 && result[0:len(prefix)] == prefix {
+			return results[rIndex][len(prefix):]
+		}
+	}
 
-    return ""
+	return ""
 }
 
-func mapAddWww(r *http.Request) (string) {
+func mapAddWww(r *http.Request) string {
 
-    host := r.Host;
+	host := r.Host
 
-    if (strings.HasPrefix(host, "www.")) {
-        return makeError("error-already-has-www");
-    }
+	if strings.HasPrefix(host, "www.") {
+		return makeError("error-already-has-www")
+	}
 
-    loc := url.URL(*r.URL);
-    loc.Scheme = getScheme(r);
-    loc.Host = "www." + host;
-    return loc.String();
+	loc := url.URL(*r.URL)
+	loc.Scheme = getScheme(r)
+	loc.Host = "www." + host
+	return loc.String()
 }
 
-func mapRemoveWww(r *http.Request) (string) {
-
-    host := r.Host;
-
-    if (!strings.HasPrefix(host, "www.")) {
-        return makeError("error-does-not-have-www");
-    }
-
-    loc := url.URL(*r.URL);
-    loc.Scheme = getScheme(r);
-    loc.Host = host[4:];
-    return loc.String();
+type ApiResponse struct {
+	Destination string `json:"destination"`
+	Success     bool   `json:"success"`
 }
 
-func mapLookup(r *http.Request) (string) {
+func mapApi(r *http.Request) string {
 
-    host := r.Host;
+	source := url.URL(*r.URL)
+	source.Host = r.Host
+	source.Scheme = getScheme(r)
 
-    lookup := lookupLow(host);
+	data := make(map[string]string)
+	data["source"] = source.String()
+	data["uri"] = r.RequestURI
+	data["user-agent"] = r.Header.Get("user-agent")
+	data["referrer"] = r.Header.Get("referer")
+	data["remote-addr"] = r.RemoteAddr
 
-    if (lookup == "") {
-        return makeError("error-lookup-not-found");
-    }
+	// encode request
+	buf, err := json.Marshal(data)
+	if err != nil {
+		return makeError("api-prep-error")
+	}
 
-    u, err := url.Parse(lookup)
-    if (err != nil) {
-        return makeError("lookup-parse-error");
-    }
+	// obtain certificate
+	res, err := http.Post(*endpoint, "application/json", bytes.NewReader(buf))
+	if err != nil {
+		return makeError("api-call-error")
+	}
 
-    result := url.URL(*r.URL);
-    if (u.Scheme == "") {
-        result.Scheme = getScheme(r)
-    } else {
-        result.Scheme = u.Scheme
-    }
-    result.Host = u.Host
-    if (u.Path != "") {
-        result.Path = u.Path;
-    }
-    if (u.RawQuery != "") {
-        result.RawQuery = u.RawQuery
-    }
-    return result.String();
+	defer res.Body.Close()
+
+	// check code
+	if res.StatusCode != 200 {
+		return makeError("api-invalid-server-response-code")
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+
+	// decode response
+	var apiResp ApiResponse
+	err = json.Unmarshal(body, &apiResp)
+	if err != nil {
+		return makeError("api-invalid-server-response-json")
+	}
+
+	//LATER: check that Destination is a valid url
+
+	return apiResp.Destination
+}
+
+func mapRemoveWww(r *http.Request) string {
+
+	host := r.Host
+
+	if !strings.HasPrefix(host, "www.") {
+		return makeError("error-does-not-have-www")
+	}
+
+	loc := url.URL(*r.URL)
+	loc.Scheme = getScheme(r)
+	loc.Host = host[4:]
+	return loc.String()
+}
+
+func mapLookup(r *http.Request) string {
+
+	host := r.Host
+
+	lookup := lookupLow(host)
+
+	if lookup == "" {
+		return makeError("error-lookup-not-found")
+	}
+
+	u, err := url.Parse(lookup)
+	if err != nil {
+		return makeError("lookup-parse-error")
+	}
+
+	result := url.URL(*r.URL)
+	if u.Scheme == "" {
+		result.Scheme = getScheme(r)
+	} else {
+		result.Scheme = u.Scheme
+	}
+	result.Host = u.Host
+	if u.Path != "" {
+		result.Path = u.Path
+	}
+	if u.RawQuery != "" {
+		result.RawQuery = u.RawQuery
+	}
+	return result.String()
 }
 
 func redirect_handler(w http.ResponseWriter, r *http.Request) {
 
-    /* LATER:
-    if (isAddress(r)) {
-        return makeError("error-host-is-ip-address");
-    }
-    */
+	/* LATER:
+	   if (isAddress(r)) {
+	       return makeError("error-host-is-ip-address");
+	   }
+	*/
 
-    destination := mapFunc(r);
+	destination := mapFunc(r)
 
-    if (*verbose == true) {
-        logger.Printf("INFO: redirecting from '%s' to '%s'\n", r.URL.String(), destination);
-    }
-    if (*debug == true) {
-        fmt.Fprintf(w, "DEBUG: redirecting to '%s'\n", destination);
-    } else {
-        http.Redirect(w, r, destination, http.StatusTemporaryRedirect);
-    }
+	if *verbose == true {
+		logger.Printf("INFO: redirecting from '%s' to '%s'\n", r.URL.String(), destination)
+	}
+	if *debug == true {
+		fmt.Fprintf(w, "DEBUG: redirecting to '%s'\n", destination)
+	} else {
+		http.Redirect(w, r, destination, http.StatusTemporaryRedirect)
+	}
 
-    data := make(map[string]string)
-    data["source_host"] = r.Host;
-    data["source_url"] = r.URL.String();
-    data["uri"] = r.RequestURI;
-    data["destination"] = destination
-    data["user-agent"] = r.Header.Get("user-agent");
-    data["referrer"] = r.Header.Get("referer");
-    data["path"] = r.URL.Path;
-    data["remote-addr"] = r.RemoteAddr;
+	data := make(map[string]string)
+	data["source_host"] = r.Host
+	data["source_url"] = r.URL.String()
+	data["uri"] = r.RequestURI
+	data["destination"] = destination
+	data["user-agent"] = r.Header.Get("user-agent")
+	data["referrer"] = r.Header.Get("referer")
+	data["path"] = r.URL.Path
+	data["remote-addr"] = r.RemoteAddr
+	//LATER: ip address
 
-    extraJson, err := json.Marshal(data)
-    if (err != nil) {
-        logger.Panicf("ERROR: unable convert extra data to JSON %s\n", err);
-        return;
-    }
+	extraJson, err := json.Marshal(data)
+	if err != nil {
+		logger.Panicf("ERROR: unable convert extra data to JSON %s\n", err)
+		return
+	}
 
-    logger.Printf("INFO: %s\n", extraJson);
+	logger.Printf("INFO: %s\n", extraJson)
 }
 
 func www_handler(w http.ResponseWriter, r *http.Request) {
-    http.Redirect(w, r, "https://www.redirect2.me/", http.StatusTemporaryRedirect);
+	http.Redirect(w, r, "https://www.redirect2.me/", http.StatusTemporaryRedirect)
 }
 
 func robotsTxtHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf8")
-    w.Write([]byte(`#
+	w.Write([]byte(`#
 # robots.txt for redirect2.me servers
 #
 #
@@ -192,7 +247,7 @@ Disallow: /`))
 
 func faviconSvgHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/svg+xml; charset=utf8")
-    w.Write([]byte(`<svg xmlns="http://www.w3.org/2000/svg" id="svg211" width="64" height="64"><style id="style2">.st1{display:inline}.st3{fill:none;stroke:#231f20;stroke-width:200;stroke-miterlimit:10}.st6{display:inline;fill:#231f20}</style><g id="Layer_2" transform="matrix(.05987 0 0 .05987 -5.166 -4.023)"><g id="g208"><linearGradient id="SVGID_10_" gradientUnits="userSpaceOnUse" x1="686.202" y1="119.745" x2="686.202" y2="1101.215"><stop offset=".042" id="stop172" stop-color="#8fdafd"/><stop offset=".196" id="stop174" stop-color="#8dd8fc"/><stop offset=".252" id="stop176" stop-color="#86d1f9"/><stop offset=".287" id="stop178" stop-color="#7cc7f5"/><stop offset=".365" id="stop180" stop-color="#66b9e9"/><stop offset=".421" id="stop182" stop-color="#5cb2e4"/><stop offset=".619" id="stop184" stop-color="#3eb7f0"/><stop offset=".911" id="stop186" stop-color="#1abafd"/></linearGradient><path d="M737.6 422.8h153.2L620.2 119.7 349.6 422.8h153.2v678.4h234.8V917.1c17.7 7.7 36.2 14.3 55.6 19.8 50.9 14.6 108.3 21.9 171.3 21.9 18.9 0 38.4-.7 58.3-2V721.4c-86.3 7.6-190.4 2.2-242.7-54.8-24.2-26.4-38.2-64.2-41.7-112.4z" id="path189" fill="url(#SVGID_10_)"/><linearGradient id="SVGID_11_" gradientUnits="userSpaceOnUse" x1="664.63" y1="67.231" x2="664.63" y2="1136.19"><stop offset=".035" id="stop191" stop-color="#4692cc"/><stop offset=".161" id="stop193" stop-color="#377bb6"/><stop offset=".175" id="stop195" stop-color="#377bb6"/><stop offset=".259" id="stop197" stop-color="#377bb6"/><stop offset=".666" id="stop199" stop-color="#24629c"/><stop offset=".893" id="stop201" stop-color="#1a508b"/><stop offset=".976" id="stop203" stop-color="#25476b"/></linearGradient><path d="M772.6 1136.2H467.8V457.8H271.4L620.2 67.2l348.7 390.6H772.8l.6 95c3.1 39.7 14 70 32.5 90.2 18.4 20 48.2 33.8 88.8 40.8 35 6.1 77.1 7 125.1 2.8l38-3.3v306.4l-32.7 2.2c-20.6 1.4-41 2.1-60.7 2.1-66.2 0-127.1-7.8-180.9-23.3-3.7-1.1-7.4-2.2-11-3.3v168.8zm-234.9-70h164.9V863.9l48.9 21.2c16.2 7 33.5 13.2 51.4 18.3 47.6 13.7 102 20.6 161.6 20.6 7.7 0 15.5-.1 23.4-.3v-165c-38.8 1.4-74-.6-105.1-6-56.1-9.7-99.3-30.8-128.4-62.5-29.6-32.3-46.7-77.2-50.8-133.5l-.1-1.2v-1.2l-1-166.5h110.3L620.2 172.3 427.7 387.8h110.1v678.4z" id="path206" fill="url(#SVGID_11_)"/></g></g></svg>`))
+	w.Write([]byte(`<svg xmlns="http://www.w3.org/2000/svg" id="svg211" width="64" height="64"><style id="style2">.st1{display:inline}.st3{fill:none;stroke:#231f20;stroke-width:200;stroke-miterlimit:10}.st6{display:inline;fill:#231f20}</style><g id="Layer_2" transform="matrix(.05987 0 0 .05987 -5.166 -4.023)"><g id="g208"><linearGradient id="SVGID_10_" gradientUnits="userSpaceOnUse" x1="686.202" y1="119.745" x2="686.202" y2="1101.215"><stop offset=".042" id="stop172" stop-color="#8fdafd"/><stop offset=".196" id="stop174" stop-color="#8dd8fc"/><stop offset=".252" id="stop176" stop-color="#86d1f9"/><stop offset=".287" id="stop178" stop-color="#7cc7f5"/><stop offset=".365" id="stop180" stop-color="#66b9e9"/><stop offset=".421" id="stop182" stop-color="#5cb2e4"/><stop offset=".619" id="stop184" stop-color="#3eb7f0"/><stop offset=".911" id="stop186" stop-color="#1abafd"/></linearGradient><path d="M737.6 422.8h153.2L620.2 119.7 349.6 422.8h153.2v678.4h234.8V917.1c17.7 7.7 36.2 14.3 55.6 19.8 50.9 14.6 108.3 21.9 171.3 21.9 18.9 0 38.4-.7 58.3-2V721.4c-86.3 7.6-190.4 2.2-242.7-54.8-24.2-26.4-38.2-64.2-41.7-112.4z" id="path189" fill="url(#SVGID_10_)"/><linearGradient id="SVGID_11_" gradientUnits="userSpaceOnUse" x1="664.63" y1="67.231" x2="664.63" y2="1136.19"><stop offset=".035" id="stop191" stop-color="#4692cc"/><stop offset=".161" id="stop193" stop-color="#377bb6"/><stop offset=".175" id="stop195" stop-color="#377bb6"/><stop offset=".259" id="stop197" stop-color="#377bb6"/><stop offset=".666" id="stop199" stop-color="#24629c"/><stop offset=".893" id="stop201" stop-color="#1a508b"/><stop offset=".976" id="stop203" stop-color="#25476b"/></linearGradient><path d="M772.6 1136.2H467.8V457.8H271.4L620.2 67.2l348.7 390.6H772.8l.6 95c3.1 39.7 14 70 32.5 90.2 18.4 20 48.2 33.8 88.8 40.8 35 6.1 77.1 7 125.1 2.8l38-3.3v306.4l-32.7 2.2c-20.6 1.4-41 2.1-60.7 2.1-66.2 0-127.1-7.8-180.9-23.3-3.7-1.1-7.4-2.2-11-3.3v168.8zm-234.9-70h164.9V863.9l48.9 21.2c16.2 7 33.5 13.2 51.4 18.3 47.6 13.7 102 20.6 161.6 20.6 7.7 0 15.5-.1 23.4-.3v-165c-38.8 1.4-74-.6-105.1-6-56.1-9.7-99.3-30.8-128.4-62.5-29.6-32.3-46.7-77.2-50.8-133.5l-.1-1.2v-1.2l-1-166.5h110.3L620.2 172.3 427.7 387.8h110.1v678.4z" id="path206" fill="url(#SVGID_11_)"/></g></g></svg>`))
 }
 
 var faviconIco = []byte{
@@ -270,45 +325,46 @@ var faviconIco = []byte{
 	0xff, 0xff, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0xff,
 }
 
-
 func faviconIcoHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/vnd.microsoft.icon")
-    w.Write(faviconIco)
+	w.Write(faviconIco)
 }
 
 func main() {
 
-    flag.Parse();
+	flag.Parse()
 
-    switch *action {
-        case "lookup":
-            mapFunc = mapLookup;
-        case "addwww":
-            mapFunc = mapAddWww;
-        case "removewww":
-            mapFunc = mapRemoveWww;
-        default:
-            logger.Panicf("ERROR: invalid action '%s'\n", action);
-    }
+	switch *action {
+	case "lookup":
+		mapFunc = mapLookup
+	case "addwww":
+		mapFunc = mapAddWww
+	case "api":
+		mapFunc = mapApi
+	case "removewww":
+		mapFunc = mapRemoveWww
+	default:
+		logger.Panicf("ERROR: invalid action '%s'\n", action)
+	}
 
-    if (*debug) {
-        logger.Printf("DEBUG: running in debug mode\n");
-    }
+	if *debug {
+		logger.Printf("DEBUG: running in debug mode\n")
+	}
 
-    http.HandleFunc("/", redirect_handler);
-	http.HandleFunc(*hostname + "/status.json", statusHandler);
-	http.HandleFunc(*hostname + "/", www_handler);
-	http.HandleFunc(*hostname + "/robots.txt", robotsTxtHandler);
-	http.HandleFunc(*hostname + "/favicon.ico", faviconIcoHandler);
-	http.HandleFunc(*hostname + "/favicon.svg", faviconSvgHandler);
+	http.HandleFunc("/", redirect_handler)
+	http.HandleFunc(*hostname+"/status.json", statusHandler)
+	http.HandleFunc(*hostname+"/", www_handler)
+	http.HandleFunc(*hostname+"/robots.txt", robotsTxtHandler)
+	http.HandleFunc(*hostname+"/favicon.ico", faviconIcoHandler)
+	http.HandleFunc(*hostname+"/favicon.svg", faviconSvgHandler)
 
-    if (*verbose) {
-        logger.Printf("INFO: running on port %d\n", *port);
-        logger.Printf("INFO: hostname is %s\n", *hostname);
-        logger.Printf("INFO: action is %s\n", *action);
-    }
-    err := http.ListenAndServe(":" + strconv.Itoa(*port), nil);
-    if (err != nil) {
-        logger.Panicf("ERROR: unable to listen on port %d: %s\n", *port, err);
-    }
+	if *verbose {
+		logger.Printf("INFO: running on port %d\n", *port)
+		logger.Printf("INFO: hostname is %s\n", *hostname)
+		logger.Printf("INFO: action is %s\n", *action)
+	}
+	err := http.ListenAndServe(":"+strconv.Itoa(*port), nil)
+	if err != nil {
+		logger.Panicf("ERROR: unable to listen on port %d: %s\n", *port, err)
+	}
 }
