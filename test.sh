@@ -33,3 +33,5 @@ curl --header "Host: schemepath.redirect2me.com" localhost:4000/original?query=t
 echo "DEBUG: test1"
 curl --header "Host: test1.redirect2me.com" localhost:4000/original?query=true
 
+echo "DEBUG: awesomelogos"
+curl --header "Host: www.awesomelogos.org" localhost:4000/original?query=true

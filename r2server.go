@@ -27,7 +27,7 @@ var (
 	supportUrl = "https://www.redirect2.me/support/${error}.html"
 
 	logger  = log.New(os.Stdout, "R2ME: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC)
-	mapFunc func(*http.Request) string
+	mapFunc func(*http.Request) (string, int)
 )
 
 func customDNSDialer(ctx context.Context, network, address string) (net.Conn, error) {
@@ -35,8 +35,8 @@ func customDNSDialer(ctx context.Context, network, address string) (net.Conn, er
 	return d.DialContext(ctx, "udp", "1.1.1.1:53")
 }
 
-func makeError(errcode string) string {
-	return strings.Replace(supportUrl, "${error}", errcode, -1)
+func makeError(errcode string) (string, int) {
+	return strings.Replace(supportUrl, "${error}", errcode, -1), http.StatusTemporaryRedirect
 }
 
 func getScheme(r *http.Request) string {
@@ -79,7 +79,7 @@ func lookupLow(domain string) string {
 	return ""
 }
 
-func mapAddWww(r *http.Request) string {
+func mapAddWww(r *http.Request) (string, int) {
 
 	host := r.Host
 
@@ -90,15 +90,16 @@ func mapAddWww(r *http.Request) string {
 	loc := url.URL(*r.URL)
 	loc.Scheme = getScheme(r)
 	loc.Host = "www." + host
-	return loc.String()
+	return loc.String(), http.StatusTemporaryRedirect
 }
 
 type ApiResponse struct {
 	Destination string `json:"destination"`
+	StatusCode  int    `json:"status_code"`
 	Success     bool   `json:"success"`
 }
 
-func mapApi(r *http.Request) string {
+func mapApi(r *http.Request) (string, int) {
 
 	source := url.URL(*r.URL)
 	source.Host = r.Host
@@ -140,11 +141,29 @@ func mapApi(r *http.Request) string {
 	}
 
 	//LATER: check that Destination is a valid url
+	u, err := url.Parse(apiResp.Destination)
+	if err != nil {
+		return makeError("api-invalid-server-response-url")
+	}
 
-	return apiResp.Destination
+	//expand given URL with stuff from original
+	result := url.URL(*r.URL)
+	if u.Scheme == "" {
+		result.Scheme = getScheme(r)
+	} else {
+		result.Scheme = u.Scheme
+	}
+	result.Host = u.Host
+	if u.Path != "" {
+		result.Path = u.Path
+	}
+	if u.RawQuery != "" {
+		result.RawQuery = u.RawQuery
+	}
+	return result.String(), apiResp.StatusCode
 }
 
-func mapRemoveWww(r *http.Request) string {
+func mapRemoveWww(r *http.Request) (string, int) {
 
 	host := r.Host
 
@@ -155,10 +174,10 @@ func mapRemoveWww(r *http.Request) string {
 	loc := url.URL(*r.URL)
 	loc.Scheme = getScheme(r)
 	loc.Host = host[4:]
-	return loc.String()
+	return loc.String(), http.StatusTemporaryRedirect
 }
 
-func mapLookup(r *http.Request) string {
+func mapLookup(r *http.Request) (string, int) {
 
 	host := r.Host
 
@@ -186,7 +205,7 @@ func mapLookup(r *http.Request) string {
 	if u.RawQuery != "" {
 		result.RawQuery = u.RawQuery
 	}
-	return result.String()
+	return result.String(), http.StatusTemporaryRedirect
 }
 
 func redirect_handler(w http.ResponseWriter, r *http.Request) {
@@ -197,15 +216,15 @@ func redirect_handler(w http.ResponseWriter, r *http.Request) {
 	   }
 	*/
 
-	destination := mapFunc(r)
+	destination, status_code := mapFunc(r)
 
 	if *verbose == true {
 		logger.Printf("INFO: redirecting from '%s' to '%s'\n", r.URL.String(), destination)
 	}
 	if *debug == true {
-		fmt.Fprintf(w, "DEBUG: redirecting to '%s'\n", destination)
+		fmt.Fprintf(w, "DEBUG: redirect %d to '%s'\n", status_code, destination)
 	} else {
-		http.Redirect(w, r, destination, http.StatusTemporaryRedirect)
+		http.Redirect(w, r, destination, status_code)
 	}
 
 	data := make(map[string]string)
@@ -344,7 +363,7 @@ func main() {
 	case "removewww":
 		mapFunc = mapRemoveWww
 	default:
-		logger.Panicf("ERROR: invalid action '%s'\n", action)
+		logger.Panicf("ERROR: invalid action '%s'\n", *action)
 	}
 
 	if *debug {

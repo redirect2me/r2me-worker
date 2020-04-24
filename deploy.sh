@@ -5,10 +5,7 @@
 
 SERVER=premium.redirect2.me
 
-echo "INFO: starting install on ${SERVER} at $(date)"
-
-echo "INFO: adding user"
-ssh root@${SERVER} "adduser --home /app --disabled-login r2me"
+echo "INFO: starting deploy on ${SERVER} at $(date)"
 
 echo "INFO: copying files..."
 scp r2server root@${SERVER}:/app
@@ -17,4 +14,4 @@ echo "INFO: changing ownership..."
 ssh root@${SERVER} "chown --recursive r2me:r2me /app"
 
 
-echo "INFO: install complete on ${SERVER} at $(date)"
+echo "INFO: deploy complete on ${SERVER} at $(date)"
