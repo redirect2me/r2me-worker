@@ -1,0 +1,37 @@
+[Unit]
+Description=Redirect2Me Server
+ConditionPathExists=/opt/redirect2me/r2m-server
+Requires=r2m-server.socket
+After=network-online.target
+Wants=network-online.target
+
+#Documentation=man:rsyslogd(8)
+#Documentation=https://www.rsyslog.com/doc/
+
+[Service]
+ExecStart=/opt/redirect2me/r2m-server
+Group=redirect2me
+Restart=always
+RestartSec=1
+StandardError=syslog
+StandardOutput=syslog
+SyslogIdentifier=r2m-server
+Type=simple
+User=redirect2me
+WorkingDirectory=/opt/redirect2me
+
+#OOMScoreAdjust=-900
+#PrivateTmp=yes
+#ProtectSystem=full
+#ProtectHome=yes
+#NoNewPrivileges=yes
+#TimeoutStopSec=90
+#KillMode=process
+#EnvironmentFile=-/etc/environment
+#ExecReload=/usr/sbin/sshd -t
+#RuntimeDirectory=sshd
+#RuntimeDirectoryMode=0755
+
+
+[Install]
+WantedBy=multi-user.target

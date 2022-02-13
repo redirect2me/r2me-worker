@@ -3,5 +3,6 @@
 crash.log
 .env
 .idea/
+/linux/r2m-server
 tmp/
 _tmp/

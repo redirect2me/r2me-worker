@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -o errexit
+set -o pipefail
+set -o nounset
 
 go run r2server.go status.go \
 	--action=api \

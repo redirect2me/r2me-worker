@@ -378,12 +378,31 @@ func main() {
 	http.HandleFunc(*hostname+"/favicon.svg", faviconSvgHandler)
 
 	if *verbose {
-		logger.Printf("INFO: running on port %d\n", *port)
 		logger.Printf("INFO: hostname is %s\n", *hostname)
 		logger.Printf("INFO: action is %s\n", *action)
+		logger.Printf("INFO: listen pid is %s\n", os.Getenv("LISTEN_PID"))
+		logger.Printf("INFO: listen fds is %s\n", os.Getenv("LISTEN_FDS"))
+		logger.Printf("INFO: listen fdnames is %s\n", os.Getenv("LISTEN_FDNAMES"))
 	}
-	err := http.ListenAndServe(":"+strconv.Itoa(*port), nil)
-	if err != nil {
-		logger.Panicf("ERROR: unable to listen on port %d: %s\n", *port, err)
+	if os.Getenv("LISTEN_PID") == strconv.Itoa(os.Getpid()) {
+		if *verbose {
+			logger.Printf("INFO: listening on systemd socket\n")
+		}
+		// systemd run
+		f := os.NewFile(3, "from systemd")
+		l, err := net.FileListener(f)
+		if err != nil {
+			log.Fatal(err)
+		}
+		http.Serve(l, nil)
+	} else {
+		if *verbose {
+			logger.Printf("INFO: running on port %d\n", *port)
+		}
+		err := http.ListenAndServe(":"+strconv.Itoa(*port), nil)
+		if err != nil {
+			logger.Panicf("ERROR: unable to listen on port %d: %s\n", *port, err)
+		}
 	}
+
 }
