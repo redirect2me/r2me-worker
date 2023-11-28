@@ -19,7 +19,7 @@ import (
 var (
 	verbose  = flag.Bool("verbose", true, "verbose logging")
 	debug    = flag.Bool("debug", false, "print instead of redirect")
-	port     = flag.Int("port", 80, "port to listen on")
+	port     = flag.Int("port", 8080, "port to listen on")
 	hostname = flag.String("hostname", "localhost", "hostname of this server")
 	action   = flag.String("action", "lookup", "action [lookup|addwww|removewww|api]")
 	endpoint = flag.String("endpoint", "https://admin.redirect2.me/api/lookup.json", "endpoint https://www.example.com/api/lookup.json")
@@ -215,6 +215,15 @@ func redirect_handler(w http.ResponseWriter, r *http.Request) {
 	       return makeError("error-host-is-ip-address");
 	   }
 	*/
+	// Add CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Max-Age", "604800")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
 	destination, status_code := mapFunc(r)
 
