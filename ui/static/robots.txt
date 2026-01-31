@@ -1,0 +1,8 @@
+#
+# robots.txt for admin.redirect2.me
+#
+#
+# everything here is behind a login, so go away
+
+User-Agent: *
+Disallow: /
