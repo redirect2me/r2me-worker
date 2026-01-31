@@ -42,13 +42,15 @@ func LoadConfig() *ConfigData {
 	viper.ReadInConfig()
 
 	config := &ConfigData{
-		HttpHost:  viper.GetString("http_host"),
-		HttpPort:  viper.GetInt("http_port"),
-		HttpsHost: viper.GetString("https_host"),
-		HttpsPort: viper.GetInt("https_port"),
-		Hostname:  viper.GetString("hostname"),
-		Action:    viper.GetString("action"),
-		Endpoint:  viper.GetString("endpoint"),
+		HttpHost:    viper.GetString("http_host"),
+		HttpPort:    viper.GetInt("http_port"),
+		HttpsHost:   viper.GetString("https_host"),
+		HttpsPort:   viper.GetInt("https_port"),
+		Hostname:    viper.GetString("hostname"),
+		Action:      viper.GetString("action"),
+		Endpoint:    viper.GetString("endpoint"),
+		AcmeEmail:   viper.GetString("acme_email"),
+		AcmeStaging: viper.GetBool("acme_staging"),
 	}
 
 	return config

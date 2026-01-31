@@ -15,7 +15,7 @@ tmp_dir = "tmp"
   include_ext = ["go", "gohtml", "sql", "tmpl", "json"]
   kill_delay = "0s"
   log = "build-errors.log"
-  send_interrupt = false
+  send_interrupt = true
   stop_on_error = true
 
 [color]

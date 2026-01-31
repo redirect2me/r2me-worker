@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/redirect2me/r2me-worker/ui"
@@ -10,7 +14,7 @@ import (
 
 func main() {
 
-	Logger.Trace("Starting", "timestamp", time.Now().UTC().Format(time.RFC3339)) //, "config", Config)
+	Logger.Trace("Server starting") //, "config", Config)
 
 	staticHandler := ui.GetStaticHandler(Logger.Logger)
 
@@ -34,14 +38,30 @@ func main() {
 
 	handler := RecoveryMiddleware(LoggingMiddleware(mux))
 
-	var done = make(chan bool)
+	var quit = make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	var httpSrv *http.Server
 
 	if Config.HttpPort > 0 {
-		go HttpServer(fmt.Sprintf("%s:%d", Config.HttpHost, Config.HttpPort), handler)
+		httpSrv = HttpServer(fmt.Sprintf("%s:%d", Config.HttpHost, Config.HttpPort), handler)
 	}
 	if Config.HttpsPort > 0 {
-		go HttpsServer(fmt.Sprintf("%s:%d", Config.HttpsHost, Config.HttpsPort), handler)
+		HttpsServer(fmt.Sprintf("%s:%d", Config.HttpsHost, Config.HttpsPort), handler)
 	}
 
-	<-done
+	<-quit
+
+	Logger.Info("Starting graceful shutdown")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if httpSrv != nil {
+		if err := httpSrv.Shutdown(ctx); err != nil {
+			Logger.Error("Server forced to shutdown", "error", err)
+		}
+	}
+
+	Logger.Info("Server exiting")
 }

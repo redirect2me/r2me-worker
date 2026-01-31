@@ -1,26 +1,32 @@
 # To do
 
-- [ ] cli option to take full address instead of just port
-- [ ] support "data:" urls
-- [ ] run.sh to reload on changes
-- [ ] merge status.go changes
-- [ ] check to name is IP address (net.ParseIP)
-- [ ] getUrl(r)
-- [ ] getHost(r)
-- [ ] getClientIP (CF-Connecting-IP, X-Forwarded-For)
-- [ ] json logging
-- [ ] install.sh: adduser is prompting
-- [ ] actually use the r2me user
-- [ ] lookup caching
+## Basics
+
+
+- [ ] Configurable directory for certs
+- [ ] certmagic logging https://pkg.go.dev/go.uber.org/zap#section-readme
+- [ ] source value in log statements needs to be one higher
+
+## Deploy
+
 - [ ] init script
-- [ ] lookup: parse TXT value and use http/s and/or path/querystring
-- [ ] different http status codes: 301, 302, 307...
-- [ ] papertrail
+- [ ] logrotate
+- [ ] build deb
+
+
 - [ ] check for short hostnames (less than len(www))
-- [ ] log complete source url
-- [ ] recursive lookup
+
+
+## Future 
+
+- [ ] lookup: parse TXT value and use http/s and/or path/querystring
 - [ ] interstitial redirect pages
- 
+- [ ] check to name is IP address (net.ParseIP)
+- [ ] make sure client IP is correct (CF-Connecting-IP, X-Forwarded-For, etc)
+- [ ] lookup caching
+- [ ] different http status codes: 301, 302, 307... (maybe not: too dangerous)
+- [ ] support "data:" urls
+
 ## https support
 
 - [ ] keypair table
