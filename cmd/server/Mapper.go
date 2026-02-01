@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"strings"
 )
@@ -151,7 +152,14 @@ func GetMapper(action string) (http.HandlerFunc, error) {
 		return nil, errors.New("ErrUnknownAction")
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		result := mapFn(r)
+		var result MapResult
+
+		_, ipErr := netip.ParseAddr(r.Host)
+		if ipErr == nil {
+			result = makeError("error-host-is-ip-address")
+		} else {
+			result = mapFn(r)
+		}
 
 		if r.Header.Get("X-Redirect2Me-Debug") == "1" {
 			HandleJson(w, r, result)

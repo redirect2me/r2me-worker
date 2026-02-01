@@ -13,6 +13,7 @@ func HttpsServer(httpsAddress string, mux http.Handler) *http.Server {
 
 	certmagic.DefaultACME.Agreed = true
 	certmagic.DefaultACME.Email = Config.AcmeEmail
+	certmagic.DefaultACME.Profile = "shortlived"
 
 	if Config.AcmeStaging {
 		certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
@@ -22,6 +23,8 @@ func HttpsServer(httpsAddress string, mux http.Handler) *http.Server {
 
 	zlogger, _ := zap.NewDevelopment()
 	certmagic.Default.Logger = zlogger
+
+	certmagic.Default.Storage = &certmagic.FileStorage{Path: Config.CertDir}
 
 	certmagic.Default.OnDemand = &certmagic.OnDemandConfig{
 		DecisionFunc: func(ctx context.Context, name string) error {

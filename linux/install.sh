@@ -9,12 +9,12 @@ groupadd --system redirect2me
 
 echo "INFO: creating user"
 useradd --system \
-			--gid redirect2me \
-			--create-home \
-			--home-dir /var/lib/redirect2me \
-			--shell /usr/sbin/nologin \
-			--comment "redirect2me server" \
-			redirect2me
+	--gid redirect2me \
+	--create-home \
+	--home-dir /var/lib/redirect2me \
+	--shell /usr/sbin/nologin \
+	--comment "redirect2me server" \
+	redirect2me
 
 echo "INFO: linking service"
 ln -s /opt/redirect2me/r2m-server.service /etc/systemd/system/r2m-server.service

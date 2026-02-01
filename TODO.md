@@ -2,7 +2,7 @@
 
 ## Basics
 
-
+- [ ] API map function
 - [ ] Configurable directory for certs
 - [ ] certmagic logging https://pkg.go.dev/go.uber.org/zap#section-readme
 - [ ] source value in log statements needs to be one higher
