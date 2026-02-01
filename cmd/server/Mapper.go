@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -13,6 +14,15 @@ import (
 type MapResult struct {
 	Destination string `json:"destination"`
 	StatusCode  int    `json:"status_code"`
+	Debug       bool   `json:"debug,omitempty"`
+}
+
+func (mr *MapResult) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Attr{Key: "destination", Value: slog.StringValue(mr.Destination)},
+		slog.Attr{Key: "status_code", Value: slog.IntValue(mr.StatusCode)},
+		slog.Attr{Key: "debug", Value: slog.BoolValue(mr.Debug)},
+	)
 }
 
 var supportUrl = "https://www.redirect2.me/support/${error}.html"
@@ -122,6 +132,16 @@ func mapRemoveWww(r *http.Request) MapResult {
 	}
 }
 
+func RequestLogValue(r *http.Request) slog.Value {
+	// Redact the password field and return a group of attributes
+	return slog.GroupValue(
+		slog.Attr{Key: "source_ip", Value: slog.StringValue(r.RemoteAddr)},
+		slog.Attr{Key: "user_agent", Value: slog.StringValue(r.Header.Get("User-Agent"))},
+		slog.Attr{Key: "host", Value: slog.StringValue(r.Host)},
+		slog.Attr{Key: "scheme", Value: slog.StringValue(getScheme(r))},
+	)
+}
+
 func getScheme(r *http.Request) string {
 
 	proxyValue := r.Header.Get("X-Forwarded-Proto")
@@ -162,10 +182,15 @@ func GetMapper(action string) (http.HandlerFunc, error) {
 		}
 
 		if r.Header.Get("X-Redirect2Me-Debug") == "1" {
-			HandleJson(w, r, result)
-			return
+			result.Debug = true
 		}
 
-		http.Redirect(w, r, result.Destination, result.StatusCode)
+		Logger.Info("Redirect", "request", RequestLogValue(r), "result", &result)
+
+		if result.Debug {
+			HandleJson(w, r, result)
+		} else {
+			http.Redirect(w, r, result.Destination, result.StatusCode)
+		}
 	}, nil
 }

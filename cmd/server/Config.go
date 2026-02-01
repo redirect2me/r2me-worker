@@ -83,7 +83,6 @@ func (c *ConfigData) String() string {
 }
 
 func (c *ConfigData) LogValue() slog.Value {
-	// Redact the password field and return a group of attributes
 	return slog.GroupValue(
 		slog.Attr{Key: "acme_email", Value: slog.StringValue(c.AcmeEmail)},
 		slog.Attr{Key: "acme_staging", Value: slog.BoolValue(c.AcmeStaging)},
