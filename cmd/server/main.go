@@ -83,7 +83,7 @@ func main() {
 	}
 	mux.HandleFunc("/", mapper)
 
-	handler := RecoveryMiddleware(LoggingMiddleware(mux))
+	handler := RecoveryMiddleware(LoggingMiddleware(HeaderMiddleware(mux)))
 
 	var quit = make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
