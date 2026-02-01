@@ -26,7 +26,7 @@ contents:
     dst: /etc/logrotate.d/redirect2me
     file_info:
       mode: 0644
-  - dst: /var/log/redirect2me
+  - dst: /var/log/redirect2me/certs
     type: dir
     file_info:
       mode: 0750

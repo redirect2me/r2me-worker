@@ -9,6 +9,7 @@ These are scripts to release a new version of the app
 
 * Config is loaded from `/etc/redirect2me/config.yaml`.
 * Logs are written to `/var/log/redirect2me/server.log`.
+* Certificates are stored in `/var/lib/redirect2me/certs/` if you use the sample config file.
 
 ## Troubleshooting
 

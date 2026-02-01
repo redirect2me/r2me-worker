@@ -13,13 +13,13 @@ type ConfigData struct {
 	AcmeEmail   string
 	AcmeStaging bool
 	Action      string
+	AdminHost   string
 	AdminIP     string
 	CertDir     string
 	Endpoint    string
-	Hostname    string
-	HttpHost    string
+	HttpAddr    string
 	HttpPort    int
-	HttpsHost   string
+	HttpsAddr   string
 	HttpsPort   int
 	LoadError   error
 	LogFormat   string
@@ -33,14 +33,14 @@ func LoadConfig() *ConfigData {
 	pflag.String("acme_email", "", "Email for ACME registration")
 	pflag.Bool("acme_staging", true, "Use ACME staging environment")
 	pflag.String("action", "addwww", "action [lookup|addwww|removewww|api]")
+	pflag.String("admin_host", "localhost", "Hostname for management pages (none to disable)")
 	pflag.String("admin_ip", "auto", "IP address for direct access to admin pages [ auto | none | specific IP ]")
 	pflag.String("cert_dir", os.TempDir(), "Directory to store ACME certs")
 	pflag.String("endpoint", "", "endpoint for api action")
-	pflag.String("hostname", "localhost", "Hostname of this server (for management pages)")
-	pflag.String("http_host", "", "Host to run http server on")
-	pflag.Int("http_port", 80, "Port to run http server on")
-	pflag.String("https_host", "", "Host to run https server on")
-	pflag.Int("https_port", 443, "Port to run https server on")
+	pflag.String("http_addr", "", "Network interface for the http server (empty = all interfaces)")
+	pflag.Int("http_port", 80, "Port for the http server")
+	pflag.String("https_addr", "", "Network interface for the https server (empty = all interfaces)")
+	pflag.Int("https_port", 443, "Port for the https server")
 	pflag.String("log_format", "json", "Log format [ json | text ]")
 	pflag.String("log_level", "info", "Log level [ trace | debug | info | warn | error ]")
 	pflag.Parse()
@@ -57,13 +57,13 @@ func LoadConfig() *ConfigData {
 		AcmeEmail:   viper.GetString("acme_email"),
 		AcmeStaging: viper.GetBool("acme_staging"),
 		Action:      viper.GetString("action"),
+		AdminHost:   viper.GetString("admin_host"),
 		AdminIP:     viper.GetString("admin_ip"),
 		CertDir:     viper.GetString("cert_dir"),
 		Endpoint:    viper.GetString("endpoint"),
-		Hostname:    viper.GetString("hostname"),
-		HttpHost:    viper.GetString("http_host"),
+		HttpAddr:    viper.GetString("http_addr"),
 		HttpPort:    viper.GetInt("http_port"),
-		HttpsHost:   viper.GetString("https_host"),
+		HttpsAddr:   viper.GetString("https_addr"),
 		HttpsPort:   viper.GetInt("https_port"),
 		LoadError:   LoadError,
 		LogFormat:   viper.GetString("log_format"),
@@ -87,13 +87,13 @@ func (c *ConfigData) LogValue() slog.Value {
 		slog.Attr{Key: "acme_email", Value: slog.StringValue(c.AcmeEmail)},
 		slog.Attr{Key: "acme_staging", Value: slog.BoolValue(c.AcmeStaging)},
 		slog.Attr{Key: "action", Value: slog.StringValue(c.Action)},
+		slog.Attr{Key: "admin_host", Value: slog.StringValue(c.AdminHost)},
 		slog.Attr{Key: "admin_ip", Value: slog.StringValue(c.AdminIP)},
 		slog.Attr{Key: "cert_dir", Value: slog.StringValue(c.CertDir)},
 		slog.Attr{Key: "endpoint", Value: slog.StringValue(c.Endpoint)},
-		slog.Attr{Key: "hostname", Value: slog.StringValue(c.Hostname)},
-		slog.Attr{Key: "http_host", Value: slog.StringValue(c.HttpHost)},
+		slog.Attr{Key: "http_addr", Value: slog.StringValue(c.HttpAddr)},
 		slog.Attr{Key: "http_port", Value: slog.IntValue(c.HttpPort)},
-		slog.Attr{Key: "https_host", Value: slog.StringValue(c.HttpsHost)},
+		slog.Attr{Key: "https_addr", Value: slog.StringValue(c.HttpsAddr)},
 		slog.Attr{Key: "https_port", Value: slog.IntValue(c.HttpsPort)},
 		slog.Attr{Key: "log_format", Value: slog.StringValue(c.LogFormat)},
 		slog.Attr{Key: "log_level", Value: slog.StringValue(c.LogLevel)},

@@ -52,7 +52,10 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	addAdminRoutes(mux, Config.Hostname)
+	if Config.AdminHost != "none" && Config.AdminHost != "" {
+		addAdminRoutes(mux, Config.AdminHost)
+	}
+
 	if Config.AdminIP == "none" || Config.AdminIP == "" {
 		// do nothing
 	} else if Config.AdminIP == "auto" {
@@ -88,10 +91,10 @@ func main() {
 	var httpSrv, httpsSrv *http.Server
 
 	if Config.HttpPort > 0 {
-		httpSrv = HttpServer(fmt.Sprintf("%s:%d", Config.HttpHost, Config.HttpPort), handler)
+		httpSrv = HttpServer(fmt.Sprintf("%s:%d", Config.HttpAddr, Config.HttpPort), handler)
 	}
 	if Config.HttpsPort > 0 {
-		httpsSrv = HttpsServer(fmt.Sprintf("%s:%d", Config.HttpsHost, Config.HttpsPort), handler)
+		httpsSrv = HttpsServer(fmt.Sprintf("%s:%d", Config.HttpsAddr, Config.HttpsPort), handler)
 	}
 
 	<-quit
