@@ -1,0 +1,10 @@
+/var/log/redirect2me/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+    create 0640 redirect2me redirect2me
+}
