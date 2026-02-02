@@ -26,20 +26,26 @@ contents:
     dst: /etc/logrotate.d/redirect2me
     file_info:
       mode: 0644
-  - dst: /var/log/redirect2me/certs
-    type: dir
-    file_info:
-      mode: 0750
-      owner: redirect2me
-      group: redirect2me
   - src: ./config.yaml.sample
     dst: /etc/redirect2me/config.yaml
     type: config  # Prevents overwriting user's local changes on upgrade
     file_info:
       mode: 0644
+  - dst: /var/log/redirect2me
+    type: dir
+    file_info:
+      mode: 0750
+      owner: redirect2me
+      group: redirect2me
 
   # Data Directory
   - dst: /var/lib/redirect2me
+    type: dir
+    file_info:
+      mode: 0750
+      owner: redirect2me
+      group: redirect2me
+  - dst: /var/lib/redirect2me/certs
     type: dir
     file_info:
       mode: 0750

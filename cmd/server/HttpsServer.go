@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func HttpsServer(httpsAddress string, mux http.Handler) *http.Server {
+func HttpsServer(httpsAddress string, mux http.Handler) (*http.Server, *certmagic.ACMEIssuer) {
 
 	certmagic.DefaultACME.Agreed = true
 	certmagic.DefaultACME.Email = Config.AcmeEmail
@@ -41,6 +41,8 @@ func HttpsServer(httpsAddress string, mux http.Handler) *http.Server {
 		TLSConfig: magic.TLSConfig(),
 	}
 
+	myACME := certmagic.NewACMEIssuer(magic, certmagic.DefaultACME)
+
 	go func() {
 		httpsListenErr := httpsServer.ListenAndServeTLS("", "")
 		if httpsListenErr != nil && !errors.Is(httpsListenErr, http.ErrServerClosed) {
@@ -48,5 +50,5 @@ func HttpsServer(httpsAddress string, mux http.Handler) *http.Server {
 		}
 	}()
 
-	return httpsServer
+	return httpsServer, myACME
 }

@@ -11,7 +11,9 @@ SCRIPT_DIR=$(dirname "$0")
 REPO_DIR=$(realpath "${SCRIPT_DIR}/..")
 BUILD_DIR="${REPO_DIR}/tmp/build"
 
-echo "INFO: install starting at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+echo "INFO: install starting at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+/root/.local/share/certmagic
 
 IDENTITY="~/.ssh/id_ed25519"
 SERVER=${1:-127.0.0.1}
@@ -26,4 +28,4 @@ scp -i "${IDENTITY}" "${DEB}" "root@${SERVER}:"
 echo "INFO: installing deb package"
 ssh -i "${IDENTITY}" "root@${SERVER}" "dpkg --force-confdef -i $(basename ${DEB})"
 
-echo "INFO: install complete at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+echo "INFO: install complete at $(date -u +%Y-%m-%dT%H:%M:%SZ)"

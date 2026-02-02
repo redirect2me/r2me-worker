@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/caddyserver/certmagic"
 	"github.com/redirect2me/r2me-worker/ui"
 )
 
@@ -45,7 +46,7 @@ func GetPublicIP() (string, error) {
 
 func main() {
 
-	Logger.Trace("Server starting", "config", Config)
+	Logger.Info("Server starting", "config", Config)
 	if Config.LoadError != nil {
 		Logger.Error("Error loading config", "error", Config.LoadError)
 	}
@@ -89,12 +90,17 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	var httpSrv, httpsSrv *http.Server
+	var acmeIssuer *certmagic.ACMEIssuer
 
-	if Config.HttpPort > 0 {
-		httpSrv = HttpServer(fmt.Sprintf("%s:%d", Config.HttpAddr, Config.HttpPort), handler)
-	}
 	if Config.HttpsPort > 0 {
-		httpsSrv = HttpsServer(fmt.Sprintf("%s:%d", Config.HttpsAddr, Config.HttpsPort), handler)
+		httpsSrv, acmeIssuer = HttpsServer(fmt.Sprintf("%s:%d", Config.HttpsAddr, Config.HttpsPort), handler)
+	}
+	if Config.HttpPort > 0 {
+		if acmeIssuer != nil {
+			// rebuild handler to include ACME challenge handler
+			handler = RecoveryMiddleware(LoggingMiddleware(HeaderMiddleware(acmeIssuer.HTTPChallengeHandler(mux))))
+		}
+		httpSrv = HttpServer(fmt.Sprintf("%s:%d", Config.HttpAddr, Config.HttpPort), handler)
 	}
 
 	<-quit

@@ -4,5 +4,7 @@ crash.log
 .env
 .idea/
 /linux/r2m-server
+pkg/config
 tmp/
 _tmp/
+*.tmp
