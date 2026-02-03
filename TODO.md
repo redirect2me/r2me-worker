@@ -2,7 +2,6 @@
 
 ## Basics
 - [ ] metrics
-- [ ] http acme endpoint (needed for ip address certs)
 - [ ] certmagic logging https://pkg.go.dev/go.uber.org/zap#section-readme
 - [ ] source file/line value in log statements needs to be one higher
 - [ ] timeouts ([context with timeout](https://blog.golang.org/context))
@@ -12,9 +11,13 @@
 - [ ] recent requests log on management page
 
 ## Deploy
-- [ ] server setup script (sets up a brand new work node at Digital Ocean)
-- [ ] release script (runs the server script for each node)
-- [ ] ip swap script (switches the floating IP to the new node)
+- [ ] deb install doesn't set correct permissions on /var/lib/redirect2me
+- [ ] server.sh: still problems with .ssh/authorized_keys
+- [ ] swap script
+	- copy existing certs
+	- switch the floating IP to the new node
+	- cleans up .ssh/authorized_keys
+	- set droplet name so reverse DNS works
 
 ## Future 
 - [ ] lookup: parse TXT value to get key/value pairs (space separated)

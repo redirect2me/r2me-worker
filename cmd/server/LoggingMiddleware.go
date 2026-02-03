@@ -10,13 +10,14 @@ import (
 	"github.com/google/uuid"
 )
 
-type contextKey string
+type responseIdKeyType string
 
-const responseIdKey contextKey = "response_id"
+const responseIdKey responseIdKeyType = "response_id"
 
 type loggingWriter struct {
 	http.ResponseWriter
 	statusCode int
+	mapResult  *MapResult
 }
 
 // WriteHeader overrides the default WriteHeader to record the status code.
@@ -53,10 +54,12 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		Logger.Info("Request complete",
 			"status", loggingW.statusCode,
 			"method", r.Method,
+			"host", r.Host,
 			"path", r.URL.Path,
 			"remote_addr", r.RemoteAddr,
 			"duration_ms", duration.Milliseconds(),
 			"response_id", responseID,
+			"map_result", loggingW.mapResult,
 		)
 	})
 }

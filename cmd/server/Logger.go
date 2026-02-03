@@ -85,6 +85,8 @@ func TraceReplaceAttr(groups []string, a slog.Attr) slog.Attr {
 			return a
 		}
 		a.Value = slog.StringValue(level.String())
+	} else if a.Key == "map_result" && a.Value.Any() == nil {
+		return slog.Attr{}
 	}
 
 	return a

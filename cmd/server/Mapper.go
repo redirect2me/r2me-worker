@@ -11,6 +11,10 @@ import (
 	"strings"
 )
 
+type mapResultKeyType string
+
+const mapResultKey mapResultKeyType = "map_result"
+
 type MapResult struct {
 	Destination string `json:"destination"`
 	StatusCode  int    `json:"status_code"`
@@ -18,6 +22,9 @@ type MapResult struct {
 }
 
 func (mr *MapResult) LogValue() slog.Value {
+	if mr == nil {
+		return slog.AnyValue(nil)
+	}
 	return slog.GroupValue(
 		slog.Attr{Key: "destination", Value: slog.StringValue(mr.Destination)},
 		slog.Attr{Key: "status_code", Value: slog.IntValue(mr.StatusCode)},
@@ -185,7 +192,12 @@ func GetMapper(action string) (http.HandlerFunc, error) {
 			result.Debug = true
 		}
 
-		Logger.Info("Redirect", "request", RequestLogValue(r), "result", &result)
+		if lw, ok := w.(*loggingWriter); ok {
+			lw.mapResult = &result
+		} else {
+			// this should never happen
+			Logger.Warn("ResponseWriter is not a loggingWriter, cannot attach mapResult", "request", RequestLogValue(r), "result", &result)
+		}
 
 		if result.Debug {
 			HandleJson(w, r, result)
