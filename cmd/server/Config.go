@@ -24,6 +24,7 @@ type ConfigData struct {
 	LoadError   error
 	LogFormat   string
 	LogLevel    string
+	LogSource   bool
 }
 
 var Config = LoadConfig()
@@ -43,6 +44,7 @@ func LoadConfig() *ConfigData {
 	pflag.Int("https_port", 443, "Port for the https server")
 	pflag.String("log_format", "json", "Log format [ json | text ]")
 	pflag.String("log_level", "info", "Log level [ trace | debug | info | warn | error ]")
+	pflag.Bool("log_source", false, "Include source file and line number in logs")
 	pflag.Parse()
 	viper.BindPFlags(pflag.CommandLine)
 
@@ -68,6 +70,7 @@ func LoadConfig() *ConfigData {
 		LoadError:   LoadError,
 		LogFormat:   viper.GetString("log_format"),
 		LogLevel:    viper.GetString("log_level"),
+		LogSource:   viper.GetBool("log_source"),
 	}
 
 	return config
@@ -97,5 +100,6 @@ func (c *ConfigData) LogValue() slog.Value {
 		slog.Attr{Key: "https_port", Value: slog.IntValue(c.HttpsPort)},
 		slog.Attr{Key: "log_format", Value: slog.StringValue(c.LogFormat)},
 		slog.Attr{Key: "log_level", Value: slog.StringValue(c.LogLevel)},
+		slog.Attr{Key: "log_source", Value: slog.BoolValue(c.LogSource)},
 	)
 }

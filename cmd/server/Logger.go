@@ -38,13 +38,13 @@ func initLogger() *LoggerWithTrace {
 	case "text":
 		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level:       lvl,
-			AddSource:   false,
+			AddSource:   Config.LogSource,
 			ReplaceAttr: TraceReplaceAttr,
 		})
 	default:
 		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level:       lvl,
-			AddSource:   true,
+			AddSource:   Config.LogSource,
 			ReplaceAttr: TraceReplaceAttr,
 		})
 	}
