@@ -7,6 +7,7 @@ import (
 func HeaderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Server", "redirect2.me")
+		w.Header().Set("X-Powered-By", "redirect2.me")
 		next.ServeHTTP(w, r)
 	})
 }
