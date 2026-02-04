@@ -16,7 +16,9 @@ type mapResultKeyType string
 const mapResultKey mapResultKeyType = "map_result"
 
 type MapResult struct {
+	Action      string `json:"action"`
 	Destination string `json:"destination"`
+	ResultCode  string `json:"result_code"`
 	StatusCode  int    `json:"status_code"`
 	Debug       bool   `json:"debug,omitempty"`
 }
@@ -26,7 +28,9 @@ func (mr *MapResult) LogValue() slog.Value {
 		return slog.AnyValue(nil)
 	}
 	return slog.GroupValue(
+		slog.Attr{Key: "action", Value: slog.StringValue(mr.Action)},
 		slog.Attr{Key: "destination", Value: slog.StringValue(mr.Destination)},
+		slog.Attr{Key: "result_code", Value: slog.StringValue(mr.ResultCode)},
 		slog.Attr{Key: "status_code", Value: slog.IntValue(mr.StatusCode)},
 		slog.Attr{Key: "debug", Value: slog.BoolValue(mr.Debug)},
 	)
@@ -37,6 +41,7 @@ var supportUrl = "https://www.redirect2.me/support/${error}.html"
 func makeError(errcode string) MapResult {
 	return MapResult{
 		Destination: strings.Replace(supportUrl, "${error}", errcode, -1),
+		ResultCode:  errcode,
 		StatusCode:  http.StatusTemporaryRedirect,
 	}
 }
@@ -54,6 +59,7 @@ func mapAddWww(r *http.Request) MapResult {
 	loc.Host = "www." + host
 	return MapResult{
 		Destination: loc.String(),
+		ResultCode:  "success",
 		StatusCode:  http.StatusTemporaryRedirect,
 	}
 }
@@ -118,6 +124,7 @@ func mapLookup(r *http.Request) MapResult {
 	}
 	return MapResult{
 		Destination: result.String(),
+		ResultCode:  "success",
 		StatusCode:  http.StatusTemporaryRedirect,
 	}
 }
@@ -135,6 +142,7 @@ func mapRemoveWww(r *http.Request) MapResult {
 	loc.Host = host[4:]
 	return MapResult{
 		Destination: loc.String(),
+		ResultCode:  "success",
 		StatusCode:  http.StatusTemporaryRedirect,
 	}
 }
@@ -187,6 +195,7 @@ func GetMapper(action string) (http.HandlerFunc, error) {
 		} else {
 			result = mapFn(r)
 		}
+		result.Action = Config.Action
 
 		if r.Header.Get("X-Redirect2Me-Debug") == "1" {
 			result.Debug = true
