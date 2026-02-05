@@ -5,6 +5,7 @@ go 1.24.3
 require github.com/google/uuid v1.6.0
 
 require (
+	github.com/atrox/haikunatorgo/v2 v2.0.1 // indirect
 	github.com/caddyserver/certmagic v0.25.1 // indirect
 	github.com/caddyserver/zerossl v0.1.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect

@@ -50,6 +50,7 @@ func initLogger() *LoggerWithTrace {
 	}
 
 	logger := slog.New(handler)
+	logger = logger.With("node_id", Config.NodeID)
 	slog.SetDefault(logger)
 
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 
+	haikunator "github.com/atrox/haikunatorgo/v2"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -25,6 +26,7 @@ type ConfigData struct {
 	LogFormat   string
 	LogLevel    string
 	LogSource   bool
+	NodeID      string
 }
 
 var Config = LoadConfig()
@@ -45,6 +47,7 @@ func LoadConfig() *ConfigData {
 	pflag.String("log_format", "json", "Log format [ json | text ]")
 	pflag.String("log_level", "info", "Log level [ trace | debug | info | warn | error ]")
 	pflag.Bool("log_source", false, "Include source file and line number in logs")
+	pflag.String("node_id", "", "Node ID for this server instance")
 	pflag.Parse()
 	viper.BindPFlags(pflag.CommandLine)
 
@@ -71,6 +74,11 @@ func LoadConfig() *ConfigData {
 		LogFormat:   viper.GetString("log_format"),
 		LogLevel:    viper.GetString("log_level"),
 		LogSource:   viper.GetBool("log_source"),
+		NodeID:      viper.GetString("node_id"),
+	}
+
+	if config.NodeID == "" {
+		config.NodeID = haikunator.New().Haikunate()
 	}
 
 	return config
@@ -101,5 +109,6 @@ func (c *ConfigData) LogValue() slog.Value {
 		slog.Attr{Key: "log_format", Value: slog.StringValue(c.LogFormat)},
 		slog.Attr{Key: "log_level", Value: slog.StringValue(c.LogLevel)},
 		slog.Attr{Key: "log_source", Value: slog.BoolValue(c.LogSource)},
+		slog.Attr{Key: "node_id", Value: slog.StringValue(c.NodeID)},
 	)
 }
