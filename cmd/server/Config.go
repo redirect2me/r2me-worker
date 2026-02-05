@@ -11,22 +11,24 @@ import (
 )
 
 type ConfigData struct {
-	AcmeEmail   string
-	AcmeStaging bool
-	Action      string
-	AdminHost   string
-	AdminIP     string
-	CertDir     string
-	Endpoint    string
-	HttpAddr    string
-	HttpPort    int
-	HttpsAddr   string
-	HttpsPort   int
-	LoadError   error
-	LogFormat   string
-	LogLevel    string
-	LogSource   bool
-	NodeID      string
+	AcmeEmail           string
+	AcmeStaging         bool
+	Action              string
+	AdminHost           string
+	AdminIP             string
+	CertDir             string
+	Endpoint            string
+	HttpAddr            string
+	HttpPort            int
+	HttpsAddr           string
+	HttpsPort           int
+	LoadError           error
+	LogFormat           string
+	LogLevel            string
+	LogSource           bool
+	NodeID              string
+	RealtimeCredentials string
+	RealtimeEndpoint    string
 }
 
 var Config = LoadConfig()
@@ -48,6 +50,9 @@ func LoadConfig() *ConfigData {
 	pflag.String("log_level", "info", "Log level [ trace | debug | info | warn | error ]")
 	pflag.Bool("log_source", false, "Include source file and line number in logs")
 	pflag.String("node_id", "", "Node ID for this server instance")
+	pflag.String("realtime_credentials", "", "Credentials for realtime data feed")
+	pflag.String("realtime_endpoint", "", "Endpoing for realtime data feed")
+
 	pflag.Parse()
 	viper.BindPFlags(pflag.CommandLine)
 
@@ -59,22 +64,24 @@ func LoadConfig() *ConfigData {
 	LoadError := viper.ReadInConfig()
 
 	config := &ConfigData{
-		AcmeEmail:   viper.GetString("acme_email"),
-		AcmeStaging: viper.GetBool("acme_staging"),
-		Action:      viper.GetString("action"),
-		AdminHost:   viper.GetString("admin_host"),
-		AdminIP:     viper.GetString("admin_ip"),
-		CertDir:     viper.GetString("cert_dir"),
-		Endpoint:    viper.GetString("endpoint"),
-		HttpAddr:    viper.GetString("http_addr"),
-		HttpPort:    viper.GetInt("http_port"),
-		HttpsAddr:   viper.GetString("https_addr"),
-		HttpsPort:   viper.GetInt("https_port"),
-		LoadError:   LoadError,
-		LogFormat:   viper.GetString("log_format"),
-		LogLevel:    viper.GetString("log_level"),
-		LogSource:   viper.GetBool("log_source"),
-		NodeID:      viper.GetString("node_id"),
+		AcmeEmail:           viper.GetString("acme_email"),
+		AcmeStaging:         viper.GetBool("acme_staging"),
+		Action:              viper.GetString("action"),
+		AdminHost:           viper.GetString("admin_host"),
+		AdminIP:             viper.GetString("admin_ip"),
+		CertDir:             viper.GetString("cert_dir"),
+		Endpoint:            viper.GetString("endpoint"),
+		HttpAddr:            viper.GetString("http_addr"),
+		HttpPort:            viper.GetInt("http_port"),
+		HttpsAddr:           viper.GetString("https_addr"),
+		HttpsPort:           viper.GetInt("https_port"),
+		LoadError:           LoadError,
+		LogFormat:           viper.GetString("log_format"),
+		LogLevel:            viper.GetString("log_level"),
+		LogSource:           viper.GetBool("log_source"),
+		NodeID:              viper.GetString("node_id"),
+		RealtimeCredentials: viper.GetString("realtime_credentials"),
+		RealtimeEndpoint:    viper.GetString("realtime_endpoint"),
 	}
 
 	if config.NodeID == "" {
@@ -94,6 +101,10 @@ func (c *ConfigData) String() string {
 }
 
 func (c *ConfigData) LogValue() slog.Value {
+	maskedCreds := ""
+	if c.RealtimeCredentials != "" {
+		maskedCreds = "***" //LATER: implement better masking
+	}
 	return slog.GroupValue(
 		slog.Attr{Key: "acme_email", Value: slog.StringValue(c.AcmeEmail)},
 		slog.Attr{Key: "acme_staging", Value: slog.BoolValue(c.AcmeStaging)},
@@ -110,5 +121,7 @@ func (c *ConfigData) LogValue() slog.Value {
 		slog.Attr{Key: "log_level", Value: slog.StringValue(c.LogLevel)},
 		slog.Attr{Key: "log_source", Value: slog.BoolValue(c.LogSource)},
 		slog.Attr{Key: "node_id", Value: slog.StringValue(c.NodeID)},
+		slog.Attr{Key: "realtime_credentials", Value: slog.StringValue(maskedCreds)},
+		slog.Attr{Key: "realtime_endpoint", Value: slog.StringValue(c.RealtimeEndpoint)},
 	)
 }

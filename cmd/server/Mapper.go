@@ -201,6 +201,8 @@ func GetMapper(action string) (http.HandlerFunc, error) {
 			result.Debug = true
 		}
 
+		RealtimeSend(result)
+
 		if lw, ok := w.(*loggingWriter); ok {
 			lw.mapResult = result
 		} else {
