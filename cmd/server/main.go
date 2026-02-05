@@ -27,6 +27,7 @@ func addAdminRoutes(mux *http.ServeMux, hostname string) {
 	mux.Handle(hostname+"/images/", staticHandler)
 	mux.HandleFunc(hostname+"/status.json", StatusHandler)
 	mux.HandleFunc(hostname+"/{$}", RootHandler)
+	mux.HandleFunc(hostname+"/", NotFoundHandler)
 }
 
 func GetPublicIP() (string, error) {
