@@ -38,15 +38,15 @@ func (mr *MapResult) LogValue() slog.Value {
 
 var supportUrl = "https://www.redirect2.me/support/${error}.html"
 
-func makeError(errcode string) MapResult {
-	return MapResult{
+func makeError(errcode string) *MapResult {
+	return &MapResult{
 		Destination: strings.Replace(supportUrl, "${error}", errcode, -1),
 		ResultCode:  errcode,
 		StatusCode:  http.StatusTemporaryRedirect,
 	}
 }
 
-func mapAddWww(r *http.Request) MapResult {
+func mapAddWww(r *http.Request) *MapResult {
 
 	host := r.Host
 
@@ -57,7 +57,7 @@ func mapAddWww(r *http.Request) MapResult {
 	loc := url.URL(*r.URL)
 	loc.Scheme = getScheme(r)
 	loc.Host = "www." + host
-	return MapResult{
+	return &MapResult{
 		Destination: loc.String(),
 		ResultCode:  "success",
 		StatusCode:  http.StatusTemporaryRedirect,
@@ -94,7 +94,7 @@ func lookupTxt(domain string) string {
 	return ""
 }
 
-func mapLookup(r *http.Request) MapResult {
+func mapLookup(r *http.Request) *MapResult {
 
 	host := r.Host
 
@@ -122,14 +122,14 @@ func mapLookup(r *http.Request) MapResult {
 	if u.RawQuery != "" {
 		result.RawQuery = u.RawQuery
 	}
-	return MapResult{
+	return &MapResult{
 		Destination: result.String(),
 		ResultCode:  "success",
 		StatusCode:  http.StatusTemporaryRedirect,
 	}
 }
 
-func mapRemoveWww(r *http.Request) MapResult {
+func mapRemoveWww(r *http.Request) *MapResult {
 
 	host := r.Host
 
@@ -140,7 +140,7 @@ func mapRemoveWww(r *http.Request) MapResult {
 	loc := url.URL(*r.URL)
 	loc.Scheme = getScheme(r)
 	loc.Host = host[4:]
-	return MapResult{
+	return &MapResult{
 		Destination: loc.String(),
 		ResultCode:  "success",
 		StatusCode:  http.StatusTemporaryRedirect,
@@ -173,7 +173,7 @@ func getScheme(r *http.Request) string {
 }
 
 func GetMapper(action string) (http.HandlerFunc, error) {
-	var mapFn func(r *http.Request) MapResult
+	var mapFn func(r *http.Request) *MapResult
 
 	switch action {
 	case "addwww":
@@ -187,7 +187,7 @@ func GetMapper(action string) (http.HandlerFunc, error) {
 		return nil, errors.New("ErrUnknownAction")
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		var result MapResult
+		var result *MapResult
 
 		_, ipErr := netip.ParseAddr(r.Host)
 		if ipErr == nil {
@@ -202,10 +202,10 @@ func GetMapper(action string) (http.HandlerFunc, error) {
 		}
 
 		if lw, ok := w.(*loggingWriter); ok {
-			lw.mapResult = &result
+			lw.mapResult = result
 		} else {
 			// this should never happen
-			Logger.Warn("ResponseWriter is not a loggingWriter, cannot attach mapResult", "request", RequestLogValue(r), "result", &result)
+			Logger.Warn("ResponseWriter is not a loggingWriter, cannot attach mapResult", "request", RequestLogValue(r), "result", result)
 		}
 
 		if result.Debug {
