@@ -213,6 +213,7 @@ func GetMapper(action string) (http.HandlerFunc, error) {
 		if result.Debug {
 			HandleJson(w, r, result)
 		} else {
+			w.Header().Set("X-Redirect-By", "redirect2.me")
 			http.Redirect(w, r, result.Destination, result.StatusCode)
 		}
 	}, nil
