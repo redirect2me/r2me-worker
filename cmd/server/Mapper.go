@@ -215,6 +215,7 @@ func GetMapper(action string) (http.HandlerFunc, error) {
 		} else {
 			w.Header().Set("X-Redirect-By", "redirect2.me")
 			http.Redirect(w, r, result.Destination, result.StatusCode)
+			Metrics.RedirectsTotal.WithLabelValues(result.ResultCode).Inc()
 		}
 	}, nil
 }

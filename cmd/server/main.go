@@ -28,6 +28,7 @@ func addAdminRoutes(mux *http.ServeMux, hostname string) {
 	mux.HandleFunc(hostname+"/status.json", StatusHandler)
 	mux.HandleFunc(hostname+"/{$}", RootHandler)
 	mux.HandleFunc(hostname+"/", NotFoundHandler)
+	mux.Handle(hostname+"/metrics", MetricsHandler)
 }
 
 func GetPublicIP() (string, error) {
@@ -51,6 +52,8 @@ func main() {
 	if Config.LoadError != nil {
 		Logger.Error("Error loading config", "error", Config.LoadError)
 	}
+
+	initMetrics()
 
 	mux := http.NewServeMux()
 

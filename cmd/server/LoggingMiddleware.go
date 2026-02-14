@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -61,5 +62,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			"response_id", responseID,
 			"map_result", loggingW.mapResult,
 		)
+		Metrics.RequestsTotal.WithLabelValues(strconv.Itoa(loggingW.statusCode), r.Method).Inc()
+		Metrics.RequestDuration.Observe(duration.Seconds())
 	})
 }
