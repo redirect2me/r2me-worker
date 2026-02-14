@@ -1,9 +1,0 @@
-acme_email: worker-certs@redirect2.me
-acme_staging: true
-action: lookup
-admin_ip: auto
-cert_dir: /var/lib/redirect2me/certs
-http_port: 4000
-https_port: -1
-log_format: text
-log_level: trace
