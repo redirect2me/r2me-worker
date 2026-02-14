@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 	<head>
 		<meta charset="UTF-8">
@@ -10,5 +11,11 @@
 		<h1><img src="/favicon.svg" style="height:1em;"> Redirect2me Worker Node</h1>
 		<p>This is a worker node for the Redirect2me service.</p>
 		<p>Please refer to the main <a href="https://www.redirect2.me/">redirect2.me</a> website for more information.</p>
+		<details>
+			<summary style="width:100%">System Info</summary>
+			<ul>
+				<li>Node ID: {{.Config.NodeID}}</li>
+				<li>Redirect Action: {{.Config.Action}}</li>
+		</details>
 	</body>
 </html>

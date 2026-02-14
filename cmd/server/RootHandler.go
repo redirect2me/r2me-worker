@@ -8,7 +8,9 @@ import (
 
 func RootHandler(w http.ResponseWriter, r *http.Request) {
 
-	content, err := ui.ExpandTemplate("templates/index.gohtml", nil)
+	content, err := ui.ExpandTemplate("templates/index.gohtml", map[string]interface{}{
+		"Config": Config,
+	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		Logger.Error("unable to expand template", "error", err)
