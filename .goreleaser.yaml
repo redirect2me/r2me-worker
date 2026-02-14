@@ -4,13 +4,19 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - env:
+  - binary: redirect2me
+    env:
       - CGO_ENABLED=0
-    ldflags:
-      -  -s -w -X main.VERSION={{.Version}} -X main.COMMIT={{.Commit}} -X main.LASTMOD={{.Date}} -X main.BUILTBY=goreleaser
-    main: ./cmd/server
+    goarch:
+      - amd64
+      - arm64
     goos:
       - linux
+    ldflags:
+      -  -s -w -X main.VERSION={{.Version}} -X main.COMMIT={{.Commit}} -X main.LASTMOD={{.Date}} -X main.BUILTBY=goreleaser
+    id: redirect2me
+    main: ./cmd/server
+    
 
 archives:
   - format: tar.gz
@@ -29,7 +35,8 @@ archives:
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
+version: 2
 changelog:
   sort: asc
   filters:
@@ -37,6 +44,7 @@ changelog:
       - '^docs:'
       - '^test:'
 
+project_name: redirect2me
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json

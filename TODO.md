@@ -1,14 +1,12 @@
 # To do
 
 ## Basics
-- [ ] metrics
+- [ ] metrics: free disk/memory
 - [ ] certmagic logging https://pkg.go.dev/go.uber.org/zap#section-readme
 - [ ] source file/line value in log statements needs to be one higher
 - [ ] timeouts ([context with timeout](https://blog.golang.org/context))
 - [ ] check for short hostnames (less than len(www))
 - [ ] API map function
-- [ ] debug info on management page
-- [ ] recent requests log on management page
 
 ## Deploy
 - [ ] deb install doesn't set correct permissions on /var/lib/redirect2me
