@@ -9,11 +9,24 @@ import (
 	"net/netip"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type mapResultKeyType string
 
-const mapResultKey mapResultKeyType = "map_result"
+//const mapResultKey mapResultKeyType = "map_result"
+
+type RealtimeRequest struct {
+	Result  *MapResult  `json:"result"`
+	Request *MapRequest `json:"request"`
+}
+
+type MapRequest struct {
+	URL       string `json:"url"`
+	UserAgent string `json:"user_agent"`
+	Referrer  string `json:"referrer"`
+	Millis    int64  `json:"millis"`
+}
 
 type MapResult struct {
 	Action      string `json:"action"`
@@ -201,7 +214,19 @@ func GetMapper(action string) (http.HandlerFunc, error) {
 			result.Debug = true
 		}
 
-		RealtimeSend(result)
+		logUrl := url.URL(*r.URL)
+		logUrl.Scheme = getScheme(r)
+		logUrl.Host = r.Host
+
+		RealtimeSend(&RealtimeRequest{
+			Request: &MapRequest{
+				URL:       logUrl.String(),
+				UserAgent: r.Header.Get("User-Agent"),
+				Referrer:  r.Referer(),
+				Millis:    time.Now().UnixMilli(),
+			},
+			Result: result,
+		})
 
 		if lw, ok := w.(*loggingWriter); ok {
 			lw.mapResult = result

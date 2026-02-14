@@ -16,6 +16,7 @@ func RealtimeSend(data any) {
 		Logger.Error("unable to marshal realtime data", "error", err)
 		return
 	}
+	Logger.Trace("sending realtime data", "payload", string(payload))
 
 	req, err := http.NewRequest("POST", Config.RealtimeEndpoint, bytes.NewReader(payload))
 	if err != nil {
@@ -24,6 +25,7 @@ func RealtimeSend(data any) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "r2me-worker/1.0 (commit="+COMMIT+")")
 	if Config.RealtimeCredentials != "" {
 		req.Header.Set("Authorization", "Bearer "+Config.RealtimeCredentials)
 	}
@@ -37,7 +39,7 @@ func RealtimeSend(data any) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		Logger.Error("realtime endpoint returned non-200 status", "status", resp.StatusCode)
+		Logger.Error("realtime endpoint returned non-200 status", "status", resp.StatusCode, "request", req, "response", resp)
 		return
 	}
 
