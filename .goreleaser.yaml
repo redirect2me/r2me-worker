@@ -13,7 +13,7 @@ builds:
     goos:
       - linux
     ldflags:
-      -  -s -w -X main.VERSION={{.Version}} -X main.COMMIT={{.Commit}} -X main.LASTMOD={{.Date}} -X main.BUILTBY=goreleaser
+      -  -s -w -X main.VERSION={{.Version}} -X main.COMMIT={{.Commit | trunc 7}} -X main.LASTMOD={{.Date}} -X main.BUILTBY=goreleaser
     id: redirect2me
     main: ./cmd/server
     
