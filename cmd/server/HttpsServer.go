@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"net/http"
 
@@ -27,11 +26,7 @@ func HttpsServer(httpsAddress string, mux http.Handler) (*http.Server, *certmagi
 	certmagic.Default.Storage = &certmagic.FileStorage{Path: Config.CertDir}
 
 	certmagic.Default.OnDemand = &certmagic.OnDemandConfig{
-		DecisionFunc: func(ctx context.Context, name string) error {
-			//LATER: DNS check
-			//LATER: algorithm check
-			return nil
-		},
+		DecisionFunc: IsCertEligible,
 	}
 
 	magic := certmagic.NewDefault()
