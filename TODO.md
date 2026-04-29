@@ -6,27 +6,19 @@
 - [ ] source file/line value in log statements needs to be one higher
 - [ ] timeouts ([context with timeout](https://blog.golang.org/context))
 - [ ] check for short hostnames (less than len(www))
-- [ ] API map function
-
-## Deploy
-- [ ] deb install doesn't set correct permissions on /var/lib/redirect2me
-- [ ] server.sh: still problems with .ssh/authorized_keys
-- [ ] swap script
-	- copy existing certs
-	- switch the floating IP to the new node
-	- cleans up .ssh/authorized_keys
-	- set droplet name so reverse DNS works
+- [ ] Map: `api` action
+- [ ] Map: `auto` action that tries lookup, then either add or remove www
 
 ## Future 
 - [ ] lookup: parse TXT value to get key/value pairs (space separated)
 - [ ] interstitial redirect pages
 - [ ] make sure client IP is correct (CF-Connecting-IP, X-Forwarded-For, etc)
 - [ ] lookup caching
-- [ ] different http status codes: 301, 302, 307... (maybe not: too dangerous)
 - [ ] support "data:" urls
 - [ ] [DNS caching](https://github.com/rs/dnscache) (or just regular result caching?)
 
 ## Maybe
+- [ ] different http status codes: 301, 302, 307... (or maybe not: too dangerous)
 - [ ] check names vs [public suffix list](https://pkg.go.dev/golang.org/x/net/publicsuffix) (non-public could be premium)
 - [ ] flag (and alternate destination) for bots
 - [ ] coming soon page (=interstital with no link)

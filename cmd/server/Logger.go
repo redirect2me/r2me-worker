@@ -14,7 +14,7 @@ var Logger = initLogger()
 
 func initLogger() *LoggerWithTrace {
 
-	logLevel := os.Getenv("LOG_LEVEL")
+	logLevel := Config.LogLevel
 	lvl := slog.LevelInfo
 	var err error
 	if logLevel != "" {
@@ -32,7 +32,7 @@ func initLogger() *LoggerWithTrace {
 	}
 
 	// get log format from the environment
-	logFormat := os.Getenv("LOG_FORMAT")
+	logFormat := Config.LogFormat
 	var handler slog.Handler
 	switch logFormat {
 	case "text":

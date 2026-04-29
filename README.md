@@ -14,12 +14,12 @@ You can see the available command line options by running:
 ./server --help
 ```
 
-See [`run.sh`](run.sh) for how I run the server during development.  You can test the server locally with:
+See [`run.sh`](run.sh) for how I run the server during development.  You can test the server locally by adding a header:
 ```
 curl --header "Host: redirect2me" --header "X-Redirect2me-Debug: 1" http://localhost:4000
 ```
 
-See [pkg/README.md](pkg/README.md) for how I packaging and run it in production
+You can also specific options via a config file (`/etc/redirect2me/config.yaml` or via the environment (names are uppercased command line argument parameter names).
 
 ## License
 
