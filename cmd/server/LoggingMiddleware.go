@@ -64,5 +64,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		)
 		Metrics.RequestsTotal.WithLabelValues(strconv.Itoa(loggingW.statusCode), r.Method).Inc()
 		Metrics.RequestDuration.Observe(duration.Seconds())
+
+		RecentAddHelper(r, loggingW.mapResult)
 	})
 }
