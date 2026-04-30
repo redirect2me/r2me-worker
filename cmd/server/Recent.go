@@ -1,7 +1,9 @@
 package main
 
 import (
+	"net"
 	"net/http"
+	"sort"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"golang.org/x/net/publicsuffix"
@@ -9,8 +11,17 @@ import (
 
 var recentCache *lru.Cache[string, string]
 
+func getHostWithoutPort(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.Host)
+	if err != nil {
+		// If SplitHostPort fails, r.Host likely had no port
+		return r.Host
+	}
+	return host
+}
+
 func RecentAddHelper(r *http.Request, result *MapResult) {
-	host := r.Host
+	host := getHostWithoutPort(r)
 	if host == "" {
 		host = "unknown_host"
 	} else {
@@ -64,6 +75,8 @@ func RecentHandler(w http.ResponseWriter, r *http.Request) {
 			result.Data = append(result.Data, key+"="+value)
 		}
 	}
+	// sort result.Data alphabetically
+	sort.Strings(result.Data)
 
 	HandleJson(w, r, result)
 }
