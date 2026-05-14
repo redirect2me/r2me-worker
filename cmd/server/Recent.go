@@ -4,8 +4,10 @@ import (
 	"net"
 	"net/http"
 	"sort"
+	"strings"
 
 	lru "github.com/hashicorp/golang-lru/v2"
+	"golang.org/x/net/idna"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -25,12 +27,21 @@ func RecentAddHelper(r *http.Request, result *MapResult) {
 	if host == "" {
 		host = "unknown_host"
 	} else {
+		host = strings.ToLower(host)
+		host = strings.TrimSuffix(host, ".")
 		// get etld+1 for the host
 		domain, domainErr := publicsuffix.EffectiveTLDPlusOne(host)
 		if domainErr != nil {
 			Logger.Warn("Failed to get eTLD+1 for host", "host", host, "error", domainErr)
 		} else {
 			host = domain
+		}
+		// convert from punycode to unicode
+		unicodeHost, unicodeErr := idna.ToUnicode(host)
+		if unicodeErr != nil {
+			Logger.Warn("Failed to convert host to unicode", "host", host, "error", unicodeErr)
+		} else {
+			host = unicodeHost
 		}
 	}
 
@@ -61,6 +72,7 @@ func RecentAdd(host, result string) {
 type RecentData struct {
 	Success bool     `json:"success"`
 	Message string   `json:"message"`
+	Size    int      `json:"size"`
 	Data    []string `json:"data"`
 }
 
@@ -75,8 +87,8 @@ func RecentHandler(w http.ResponseWriter, r *http.Request) {
 			result.Data = append(result.Data, key+"="+value)
 		}
 	}
-	// sort result.Data alphabetically
 	sort.Strings(result.Data)
+	result.Size = len(result.Data)
 
 	HandleJson(w, r, result)
 }
