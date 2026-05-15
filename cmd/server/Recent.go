@@ -72,7 +72,7 @@ func RecentAdd(host, result string) {
 type RecentData struct {
 	Success bool     `json:"success"`
 	Message string   `json:"message"`
-	Size    int      `json:"size"`
+	Count   int      `json:"count"`
 	Data    []string `json:"data"`
 }
 
@@ -88,7 +88,7 @@ func RecentHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	sort.Strings(result.Data)
-	result.Size = len(result.Data)
+	result.Count = len(result.Data)
 
 	HandleJson(w, r, result)
 }

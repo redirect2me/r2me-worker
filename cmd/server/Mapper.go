@@ -227,6 +227,7 @@ func GetMapper(action string) (http.HandlerFunc, error) {
 			},
 			Result: result,
 		})
+		RecentAddHelper(r, result)
 
 		if lw, ok := w.(*loggingWriter); ok {
 			lw.mapResult = result
